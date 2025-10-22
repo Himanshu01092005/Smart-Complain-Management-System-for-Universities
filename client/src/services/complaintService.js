@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/complaints/';
+//const API_URL = 'http://localhost:5000/api/complaints/';
+
+// Use process.env for CRA
+// Use the environment variable
+const API_URL = `${process.env.REACT_APP_API_URL}/api/complaints/`;
 
 // Helper function to get user and config
 const getUserConfig = () => {

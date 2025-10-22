@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/users/';
+//const API_URL = 'http://localhost:5000/api/users/';
+
+// Use environment variable
+const API_URL = `${process.env.REACT_APP_API_URL}/api/users/`;
 
 // Login user
 const login = async (userData) => {
