@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import complaintService from '../services/complaintService';
+import axios from 'axios';
 
 function ChairpersonDashboardPage() {
   const [pendingComplaints, setPendingComplaints] = useState([]);
@@ -25,11 +26,23 @@ function ChairpersonDashboardPage() {
     navigate('/login');
   };
 
-  const handleUpdateStatus = async (id, status) => {
+const handleUpdateStatus = async (id, status) => {
+    let reason = '';
+    
+    // 1. If rejecting, ask for a reason
+    if (status === 'Rejected') {
+      reason = window.prompt('Please provide a reason for rejecting this complaint (optional):');
+      if (reason === null) { // User clicked "Cancel"
+        return; 
+      }
+    }
+
     try {
-      await complaintService.updateComplaintStatus(id, status);
-      alert(`Complaint has been ${status === 'In Progress' ? 'Approved' : 'Rejected'}`);
-      // Refresh the list after updating
+      // 2. Pass the status and reason to the service
+      await complaintService.updateComplaintStatus(id, status, reason);
+      
+      const action = status === 'In Progress' ? 'Approved' : 'Rejected';
+      alert(`Complaint has been ${action}`);
       fetchPendingComplaints();
     } catch (error) {
       alert('Failed to update status');

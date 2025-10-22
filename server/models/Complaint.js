@@ -24,8 +24,20 @@ const complaintSchema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      enum: ['Pending Approval', 'In Progress', 'Resolved', 'Rejected'],
+      enum: ['Pending Approval', 'In Progress','Acknowledged', 'Resolved', 'Rejected'],
       default: 'Pending Approval',
+    },
+    rejectionReason: { // Add this field
+      type: String,
+      default: '',
+    },
+    solverNotes: { // Add this field
+      type: String,
+      default: '',
+    },
+    etr: { // Add this field (Estimated Time of Resolution)
+      type: String,
+      default: '',
     },
     photos: [
       {

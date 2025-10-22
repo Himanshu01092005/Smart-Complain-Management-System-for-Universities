@@ -56,7 +56,7 @@ const getDepartmentComplaints = async (req, res) => {
 // @access  Private/Chairperson
 const updateComplaintStatus = async (req, res) => {
   try {
-    const { status } = req.body; // The new status (e.g., "In Progress" or "Rejected")
+    const { status, rejectionReason } = req.body; // The new status (e.g., "In Progress" or "Rejected")
     const complaint = await Complaint.findById(req.params.id);
 
     if (!complaint) {
@@ -64,12 +64,15 @@ const updateComplaintStatus = async (req, res) => {
     }
 
     // Security Check: Ensure the complaint belongs to the chairperson's department
-    if (complaint.department.toString() !== req.user.department) {
+    if (!complaint.department || complaint.department !== req.user.department) {
       return res.status(403).json({ message: 'User not authorized to update this complaint' });
     }
 
     // Update the status and save the document
     complaint.status = status;
+    if (rejectionReason) {
+      complaint.rejectionReason = rejectionReason;
+    }
     const updatedComplaint = await complaint.save();
 
     res.status(200).json(updatedComplaint);
@@ -88,7 +91,7 @@ const getAssignedComplaints = async (req, res) => {
   try {
     const complaints = await Complaint.find({
       department: req.user.department,
-      status: 'In Progress', // The key difference: finds "In Progress"
+      status: { $in: ['In Progress', 'Acknowledged'] }, // The key difference: finds "In Progress"
     }).populate('user', 'name email');
 
     res.status(200).json(complaints);
@@ -123,11 +126,60 @@ const resolveComplaint = async (req, res) => {
 };
 
 
+// @desc    Acknowledge a complaint
+// @route   PUT /api/complaints/:id/acknowledge
+// @access  Private/Solver
+const acknowledgeComplaint = async (req, res) => {
+  try {
+    const { solverNotes, etr } = req.body;
+    const complaint = await Complaint.findById(req.params.id);
+
+    if (!complaint) {
+      return res.status(404).json({ message: 'Complaint not found' });
+    }
+
+    // Security Check: Ensure complaint belongs to the solver's department
+    if (complaint.department.toString() !== req.user.department) {
+      return res.status(403).json({ message: 'User not authorized for this complaint' });
+    }
+
+    // Update the complaint
+    complaint.status = 'Acknowledged';
+    complaint.solverNotes = solverNotes;
+    complaint.etr = etr;
+
+    const updatedComplaint = await complaint.save();
+    res.status(200).json(updatedComplaint);
+
+  } catch (error) {
+    res.status(500).json({ message: `Server Error: ${error.message}` });
+  }
+};
+
+// @desc    Get all "Resolved" complaints for a solver's department
+// @route   GET /api/complaints/resolved
+// @access  Private/Solver
+const getResolvedComplaints = async (req, res) => {
+  try {
+    const complaints = await Complaint.find({
+      department: req.user.department,
+      status: 'Resolved',
+    }).populate('user', 'name email');
+
+    res.status(200).json(complaints);
+  } catch (error) {
+    res.status(500).json({ message: `Server Error: ${error.message}` });
+  }
+};
+
+
 module.exports = {
   createComplaint,
   getMyComplaints,
   getDepartmentComplaints,
   updateComplaintStatus,
   getAssignedComplaints,
-  resolveComplaint,       
+  resolveComplaint,    
+  acknowledgeComplaint,   
+  getResolvedComplaints,
 };

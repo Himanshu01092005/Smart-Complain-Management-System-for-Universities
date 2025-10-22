@@ -55,9 +55,11 @@ const getDepartmentComplaints = async () => {
 };
 
 // Update a complaint's status (for Chairperson)
-const updateComplaintStatus = async (id, status) => {
+const updateComplaintStatus = async (id, status, rejectionReason) => {
   const config = getUserConfig();
-  const response = await axios.put(API_URL + `${id}/update-status`, { status }, config);
+  // 1. Create the request body with both fields
+  const body = { status, rejectionReason };
+  const response = await axios.put(API_URL + `${id}/update-status`, body, config);
   return response.data;
 };
 
@@ -74,13 +76,29 @@ const resolveComplaint = async (id) => {
   return response.data;
 };
 
+// Acknowledge a complaint 
+const acknowledgeComplaint = async (id, acknowledgeData) => {
+  const config = getUserConfig();
+  const response = await axios.put(API_URL + `${id}/acknowledge`, acknowledgeData, config);
+  return response.data;
+};
+
+// Get resolved complaints (for Solver history)
+const getResolvedComplaints = async () => {
+  const config = getUserConfig();
+  const response = await axios.get(API_URL + 'resolved', config);
+  return response.data;
+};
+
 const complaintService = {
   createComplaint,
   getMyComplaints,
   getDepartmentComplaints,
   updateComplaintStatus,
   getAssignedComplaints, // Add this(will write comments letter)
-  resolveComplaint,      
+  resolveComplaint,     
+  acknowledgeComplaint, 
+  getResolvedComplaints,
 };
 
 

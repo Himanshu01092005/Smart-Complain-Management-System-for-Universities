@@ -20,7 +20,9 @@ const {
   getDepartmentComplaints,
   updateComplaintStatus,
   getAssignedComplaints, 
-  resolveComplaint,       
+  resolveComplaint,    
+  acknowledgeComplaint,   
+  getResolvedComplaints,
 } = require('../controllers/complaintController');
 const { protect, isChairperson, isSolver } = require('../middleware/authMiddleware'); // Import isSolver
 
@@ -34,6 +36,8 @@ router.put('/:id/update-status', protect, isChairperson, updateComplaintStatus);
 
 // Solver routes
 router.get('/assigned', protect, isSolver, getAssignedComplaints);
+router.put('/:id/acknowledge', protect, isSolver, acknowledgeComplaint);
 router.put('/:id/resolve', protect, isSolver, resolveComplaint);
+router.get('/resolved', protect, isSolver, getResolvedComplaints);
 
 module.exports = router;
