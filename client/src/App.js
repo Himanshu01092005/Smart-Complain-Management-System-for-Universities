@@ -5,6 +5,7 @@ import DashboardPage from './pages/DashboardPage';
 import ProtectedRoute from './components/ProtectedRoute'; 
 import CreateComplaintPage from './pages/CreateComplaintPage';
 import HomePage from './pages/HomePage';
+import ComplaintDetailPage from './pages/ComplaintDetailPage';
 import './App.css';
 
 function App() {
@@ -22,6 +23,11 @@ function App() {
                 <HomePage />
               </ProtectedRoute>
             }
+          />
+
+          <Route 
+            path="/complaint/:id" 
+            element={<ProtectedRoute><ComplaintDetailPage /></ProtectedRoute>} 
           />
 
           <Route 

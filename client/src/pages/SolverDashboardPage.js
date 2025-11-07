@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import authService from '../services/authService';
-import complaintService from '../services/complaintService';
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import authService from "../services/authService";
+import complaintService from "../services/complaintService";
 
 function SolverDashboardPage() {
   const [allComplaints, setAllComplaints] = useState([]);
-  const [activeFilter, setActiveFilter] = useState('new'); // 'new', 'acknowledged', 'resolved'
+  const [activeFilter, setActiveFilter] = useState("new"); // 'new', 'acknowledged', 'resolved'
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -21,7 +21,7 @@ function SolverDashboardPage() {
       // Combine them into one big list
       setAllComplaints([...assignedData, ...resolvedData]);
     } catch (error) {
-      console.error('Failed to fetch complaints:', error);
+      console.error("Failed to fetch complaints:", error);
     } finally {
       setLoading(false);
     }
@@ -33,47 +33,51 @@ function SolverDashboardPage() {
 
   const handleLogout = () => {
     authService.logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   // This function will refresh the data from the server
   const refreshData = () => fetchAllComplaints();
 
   const handleAcknowledge = async (id) => {
-    const etr = window.prompt('Please enter an Estimate time of resolution(ETR)  (e.g., "2 hours", "By 5 PM today or date"):');
+    const etr = window.prompt(
+      'Please enter an Estimate time of resolution(ETR)  (e.g., "2 hours", "By 5 PM today or date"):'
+    );
     if (etr === null) return;
-    const solverNotes = window.prompt('Please add a note for the user (optional):');
+    const solverNotes = window.prompt(
+      "Please add a note for the user (optional):"
+    );
     if (solverNotes === null) return;
 
     try {
       await complaintService.acknowledgeComplaint(id, { etr, solverNotes });
-      alert('Complaint Acknowledged!');
+      alert("Complaint Acknowledged!");
       refreshData(); // Refresh all data
     } catch (error) {
-      alert('Failed to acknowledge complaint');
+      alert("Failed to acknowledge complaint");
     }
   };
 
   const handleResolve = async (id) => {
     try {
       await complaintService.resolveComplaint(id);
-      alert('Complaint marked as Resolved!');
+      alert("Complaint marked as Resolved!");
       refreshData(); // Refresh all data
     } catch (error) {
-      alert('Failed to update status');
+      alert("Failed to update status");
     }
   };
 
   // This is the magic: Filter the list based on the activeFilter state
   const filteredComplaints = useMemo(() => {
-    if (activeFilter === 'new') {
-      return allComplaints.filter((c) => c.status === 'In Progress');
+    if (activeFilter === "new") {
+      return allComplaints.filter((c) => c.status === "In Progress");
     }
-    if (activeFilter === 'acknowledged') {
-      return allComplaints.filter((c) => c.status === 'Acknowledged');
+    if (activeFilter === "acknowledged") {
+      return allComplaints.filter((c) => c.status === "Acknowledged");
     }
-    if (activeFilter === 'resolved') {
-      return allComplaints.filter((c) => c.status === 'Resolved');
+    if (activeFilter === "resolved") {
+      return allComplaints.filter((c) => c.status === "Resolved");
     }
     return allComplaints; // 'all' filter
   }, [allComplaints, activeFilter]);
@@ -84,8 +88,8 @@ function SolverDashboardPage() {
       onClick={() => setActiveFilter(filter)}
       className={`px-4 py-2 font-medium rounded-md ${
         activeFilter === filter
-          ? 'bg-blue-600 text-white'
-          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          ? "bg-blue-600 text-white"
+          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
       }`}
     >
       {label}
@@ -113,9 +117,9 @@ function SolverDashboardPage() {
 
       <div className="bg-white p-6 rounded-lg shadow-md">
         <h2 className="text-2xl font-semibold mb-4 text-gray-700">
-          {activeFilter === 'new' && 'New Tasks'}
-          {activeFilter === 'acknowledged' && 'My Acknowledged Tasks'}
-          {activeFilter === 'resolved' && 'My Resolved History'}
+          {activeFilter === "new" && "New Tasks"}
+          {activeFilter === "acknowledged" && "My Acknowledged Tasks"}
+          {activeFilter === "resolved" && "My Resolved History"}
         </h2>
 
         {loading ? (
@@ -126,25 +130,49 @@ function SolverDashboardPage() {
               <li key={complaint._id} className="border-b last:border-b-0 py-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h3 className="text-lg font-bold text-gray-800">{complaint.title}</h3>
-                    <p className="text-sm text-gray-500">Submitted by: {complaint.user.name}</p>
-                    <p className="mt-2 text-gray-700">{complaint.description}</p>
-                    
-                    {complaint.status === 'Acknowledged' && (
-                      <div className="mt-2 p-2 bg-blue-50 rounded-md">
-                        <p className="text-sm font-semibold text-blue-700">ETR: {complaint.etr}</p>
-                        <p className="text-sm text-blue-700">My Note: {complaint.solverNotes}</p>
+                    <h3 className="text-lg font-bold text-gray-800">
+                      {complaint.title}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      Submitted by: {complaint.user.name}
+                    </p>
+                    <p className="mt-2 text-gray-700">
+                      {complaint.description}
+                    </p>
+
+                    {/* --- ADD THIS SECTION --- */}
+                    {complaint.photos && complaint.photos.length > 0 && (
+                      <div className="mt-4">
+                        <img
+                          src={complaint.photos[0]}
+                          alt="Complaint evidence"
+                          className="rounded-lg max-w-xs"
+                        />
                       </div>
                     )}
-                    {complaint.status === 'Resolved' && (
+                    {/* --- END OF SECTION --- */}
+
+                    {complaint.status === "Acknowledged" && (
+                      <div className="mt-2 p-2 bg-blue-50 rounded-md">
+                        <p className="text-sm font-semibold text-blue-700">
+                          Estimate time of resolution: {complaint.etr}
+                        </p>
+                        <p className="text-sm text-blue-700">
+                          My Note: {complaint.solverNotes}
+                        </p>
+                      </div>
+                    )}
+                    {complaint.status === "Resolved" && (
                       <div className="mt-2 p-2 bg-green-50 rounded-md">
-                        <p className="text-sm font-semibold text-green-700">Work Completed</p>
+                        <p className="text-sm font-semibold text-green-700">
+                          Work Completed
+                        </p>
                       </div>
                     )}
                   </div>
 
                   {/* --- CONDITIONAL BUTTONS --- */}
-                  {complaint.status === 'In Progress' && (
+                  {complaint.status === "In Progress" && (
                     <button
                       onClick={() => handleAcknowledge(complaint._id)}
                       className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
@@ -152,7 +180,7 @@ function SolverDashboardPage() {
                       Acknowledge
                     </button>
                   )}
-                  {complaint.status === 'Acknowledged' && (
+                  {complaint.status === "Acknowledged" && (
                     <button
                       onClick={() => handleResolve(complaint._id)}
                       className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
@@ -161,7 +189,6 @@ function SolverDashboardPage() {
                     </button>
                   )}
                   {/* No button shows for 'Resolved' tasks */}
-
                 </div>
               </li>
             ))}

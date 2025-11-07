@@ -33,14 +33,27 @@ const getMyComplaints = async () => {
   return response.data;
 };
 
+// Cancel a complaint (by user)
+const cancelComplaint = async (id) => {
+  const config = getUserConfig();
+  const response = await axios.put(API_URL + `${id}/cancel`, null, config);
+  return response.data;
+};
+
 // Create new complaint
 const createComplaint = async (complaintData) => {
+  // complaintData is now expected to be a FormData object
   const user = JSON.parse(localStorage.getItem('user'));
+  
   const config = {
     headers: {
       Authorization: `Bearer ${user.token}`,
+      // We explicitly DO NOT set Content-Type.
+      // Axios will set it automatically to 'multipart/form-data'
+      // along with the correct boundary.
     },
   };
+  
   const response = await axios.post(API_URL, complaintData, config);
   return response.data;
 };
@@ -90,15 +103,26 @@ const getResolvedComplaints = async () => {
   return response.data;
 };
 
+// Get a single complaint by its ID
+const getComplaintById = async (id) => {
+  const config = getUserConfig();
+  const response = await axios.get(API_URL + id, config); // e.g., /api/complaints/60b8d...
+  return response.data;
+};
+
+
+
 const complaintService = {
   createComplaint,
   getMyComplaints,
+  cancelComplaint,
   getDepartmentComplaints,
   updateComplaintStatus,
-  getAssignedComplaints, // Add this(will write comments letter)
+  getAssignedComplaints, // Added this(will write comments letter)
   resolveComplaint,     
   acknowledgeComplaint, 
   getResolvedComplaints,
+  getComplaintById,
 };
 
 

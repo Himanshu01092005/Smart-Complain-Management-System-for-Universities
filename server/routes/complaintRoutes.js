@@ -23,12 +23,21 @@ const {
   resolveComplaint,    
   acknowledgeComplaint,   
   getResolvedComplaints,
+  cancelComplaint,
+  getComplaintById,
 } = require('../controllers/complaintController');
 const { protect, isChairperson, isSolver } = require('../middleware/authMiddleware'); // Import isSolver
 
+//importing the upload config
+const upload = require('../config/cloudinary');
+
 // User routes
-router.post('/', protect, createComplaint);
+router.post('/', protect, upload.single('photo'), createComplaint);
 router.get('/my-complaints', protect, getMyComplaints);
+
+router.get('/:id', protect, getComplaintById);
+
+router.put('/:id/cancel', protect, cancelComplaint);
 
 // Chairperson routes
 router.get('/department', protect, isChairperson, getDepartmentComplaints);

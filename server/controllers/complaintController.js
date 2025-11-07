@@ -7,11 +7,16 @@ const createComplaint = async (req, res) => {
   try {
     const { title, description, department } = req.body;
 
+    // 1. Check if a file was uploaded.
+    // The URL from Cloudinary will be in req.file.path
+    const photoUrl = req.file ? req.file.path : null;
+
     const complaint = await Complaint.create({
       title,
       description,
       department,
-      user: req.user.id, // Get the user ID from the middleware
+      user: req.user.id,
+      photos: photoUrl ? [photoUrl] : [], // 2. Add the URL to the photos array
     });
 
     res.status(201).json(complaint);
@@ -172,6 +177,71 @@ const getResolvedComplaints = async (req, res) => {
   }
 };
 
+//Adding to make feature cancel complaint
+
+// @desc    Cancel a complaint (by user)
+// @route   PUT /api/complaints/:id/cancel
+// @access  Private
+const cancelComplaint = async (req, res) => {
+  try {
+    const complaint = await Complaint.findById(req.params.id);
+
+    if (!complaint) {
+      return res.status(404).json({ message: 'Complaint not found' });
+    }
+
+    // Security Check 1: Ensure user owns the complaint
+    if (complaint.user.toString() !== req.user.id) {
+      return res.status(401).json({ message: 'User not authorized' });
+    }
+    
+    // Security Check 2: Only allow cancellation if it's still pending
+    if (complaint.status !== 'Pending Approval') {
+      return res.status(400).json({ message: 'Cannot cancel a complaint that is already being processed.' });
+    }
+
+    complaint.status = 'Cancelled';
+    const updatedComplaint = await complaint.save();
+
+    res.status(200).json(updatedComplaint);
+
+  } catch (error) {
+    res.status(500).json({ message: `Server Error: ${error.message}` });
+  }
+};
+
+// @desc    Get a single complaint by its ID
+// @route   GET /api/complaints/:id
+// @access  Private
+const getComplaintById = async (req, res) => {
+  try {
+    const complaint = await Complaint.findById(req.params.id)
+                                     .populate('user', 'name email'); // Also get the user's info
+
+    if (!complaint) {
+      return res.status(404).json({ message: 'Complaint not found' });
+    }
+
+    // --- SECURITY CHECK ---
+    // 1. Is the logged-in user the one who created it?
+    const isOwner = complaint.user._id.toString() === req.user.id;
+
+    // 2. Is the logged-in user a (Chair/Solver) in the complaint's department?
+    const isAuthorizedStaff = (req.user.role === 'Chairperson' || req.user.role === 'Solver') &&
+                            (req.user.department === complaint.department);
+
+    if (!isOwner && !isAuthorizedStaff) {
+      return res.status(401).json({ message: 'User not authorized to view this complaint' });
+    }
+
+    // If they are authorized, send the complaint
+    res.status(200).json(complaint);
+
+  } catch (error) {
+    res.status(500).json({ message: `Server Error: ${error.message}` });
+  }
+};
+
 
 module.exports = {
   createComplaint,
@@ -182,4 +252,6 @@ module.exports = {
   resolveComplaint,    
   acknowledgeComplaint,   
   getResolvedComplaints,
+  cancelComplaint,
+  getComplaintById,
 };

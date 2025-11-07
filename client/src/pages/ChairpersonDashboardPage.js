@@ -72,6 +72,17 @@ const handleUpdateStatus = async (id, status) => {
                   <h3 className="text-lg font-bold text-gray-800">{complaint.title}</h3>
                   <p className="text-sm text-gray-500">Submitted by: {complaint.user.name} ({complaint.user.email})</p>
                   <p className="mt-2 text-gray-700">{complaint.description}</p>
+
+                  {/* --- ADD THIS SECTION --- */}
+                {complaint.photos && complaint.photos.length > 0 && (
+                <div className="mt-4">
+                  <img 
+                    src={complaint.photos[0]} 
+                    alt="Complaint evidence" 
+                    className="rounded-lg max-w-xs" 
+                  />
+                </div>)}
+
                 </div>
                 <div className="flex items-center space-x-4 mt-4">
                   <button

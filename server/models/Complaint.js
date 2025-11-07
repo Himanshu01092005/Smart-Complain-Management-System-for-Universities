@@ -24,7 +24,7 @@ const complaintSchema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      enum: ['Pending Approval', 'In Progress','Acknowledged', 'Resolved', 'Rejected'],
+      enum: ['Pending Approval', 'In Progress','Acknowledged', 'Resolved', 'Rejected','Cancelled'],
       default: 'Pending Approval',
     },
     rejectionReason: { // Add this field
