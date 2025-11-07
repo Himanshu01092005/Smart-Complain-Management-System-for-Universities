@@ -1,4 +1,5 @@
 const Complaint = require('../models/Complaint');
+const User = require('../models/user');
 
 // @desc    Create a new complaint
 // @route   POST /api/complaints
@@ -40,18 +41,90 @@ const getMyComplaints = async (req, res) => {
 };
 
 
+// // @desc    Get all pending complaints for a chairperson's department
+// // @route   GET /api/complaints/department
+// // @access  Private/Chairperson
+// const getDepartmentComplaints = async (req, res) => {
+//   try {
+//     const complaints = await Complaint.find({
+//       department: req.user.department, // Filter by the chairperson's department
+//       status: 'Pending Approval',      // Only show pending complaints
+//     }).populate('user', 'name email'); // Also fetch the name and email of the user who submitted it
+
+//     res.status(200).json(complaints);
+//   } catch (error) {
+//     res.status(500).json({ message: `Server Error: ${error.message}` });
+//   }
+// };
+
+// (in server/controllers/complaintController.js)
+
+// (in server/controllers/complaintController.js)
+
+// (in server/controllers/complaintController.js)
+
 // @desc    Get all pending complaints for a chairperson's department
 // @route   GET /api/complaints/department
 // @access  Private/Chairperson
 const getDepartmentComplaints = async (req, res) => {
   try {
-    const complaints = await Complaint.find({
-      department: req.user.department, // Filter by the chairperson's department
-      status: 'Pending Approval',      // Only show pending complaints
-    }).populate('user', 'name email'); // Also fetch the name and email of the user who submitted it
+    if (!req.user.department) {
+      console.warn(`User ${req.user.email} (Chairperson) has no department assigned.`);
+      return res.status(200).json([]);
+    }
 
-    res.status(200).json(complaints);
+    // 1. Fetch all pending complaints (as plain JavaScript objects)
+    const complaints = await Complaint.find({
+      department: req.user.department,
+      status: 'Pending Approval',
+    }).lean(); 
+
+    if (!complaints || complaints.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    // 2. Get all unique, valid user IDs from these complaints
+    const userIds = [
+      ...new Set(
+        complaints
+          .map((c) => c.user) // Get all user IDs
+          .filter((id) => id) // Filter out any null/undefined IDs
+      ),
+    ];
+
+    // 3. Fetch all those users in one database call
+    const users = await User.find({ _id: { $in: userIds } }).select('name email');
+
+    // 4. Create a "map" of users for easy lookup
+    // e.g., { '60b...': { name: 'Test User', email: 'test@...' } }
+    const userMap = users.reduce((acc, user) => {
+      acc[user._id.toString()] = user;
+      return acc;
+    }, {});
+
+    // 5. Manually "populate" the complaints
+    const populatedComplaints = complaints
+      .map((complaint) => {
+        // Find the user from our map
+        const user = userMap[complaint.user?.toString()];
+        
+        // If the user exists, attach them to the complaint
+        if (user) {
+          return {
+            ...complaint, // Spread the complaint data
+            user: user,    // Overwrite the 'user' ID with the user object
+          };
+        }
+        // If user not found (bad data), skip this complaint
+        console.warn(`Skipping complaint ${complaint._id}, user ${complaint.user} not found.`);
+        return null;
+      })
+      .filter((c) => c !== null); // Filter out the nulls
+
+    res.status(200).json(populatedComplaints);
+
   } catch (error) {
+    console.error("CRASH IN getDepartmentComplaints:", error);
     res.status(500).json({ message: `Server Error: ${error.message}` });
   }
 };

@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 // @route   POST /api/users/register
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role, department } = req.body;
 
     // 1. Check if user already exists
     const userExists = await User.findOne({ email });
@@ -23,6 +23,8 @@ const registerUser = async (req, res) => {
       name,
       email,
       password: hashedPassword,
+      role,
+      department,
     });
 
     // 4. If user was created successfully, generate a token
